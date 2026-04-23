@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OnboardIQ</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F3F4F9;
+  --surface:#FFFFFF;
+  --navy:#0D1117;
+  --accent:#2563EB;
+  --accent-l:#EFF6FF;
+  --accent-m:#DBEAFE;
+  --text:#0F172A;
+  --sub:#64748B;
+  --muted:#94A3B8;
+  --border:#E2E8F0;
+  --green:#059669;
+  --green-l:#ECFDF5;
+  --amber:#D97706;
+  --amber-l:#FFFBEB;
+  --red:#DC2626;
+  --red-l:#FEF2F2;
+  --nav-h:64px;
+}
+body{background:#18181C;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;user-select:none}
+
+/* ── Phone shell ── */
+.phone{position:relative;width:393px;height:852px;background:#111113;border-radius:56px;border:1.5px solid #2A2A2E;box-shadow:0 0 0 8px #0D0D0F,0 48px 96px rgba(0,0,0,.95),inset 0 0 0 1.5px #333336;flex-shrink:0}
+.phone::after{content:'';position:absolute;right:-5px;top:192px;width:3px;height:72px;background:#222226;border-radius:2px}
+.phone::before{content:'';position:absolute;left:-5px;top:148px;width:3px;height:150px;background:linear-gradient(to bottom,#222226 0,#222226 38px,transparent 38px,transparent 48px,#222226 48px,#222226 110px,transparent 110px,transparent 120px,#222226 120px,#222226 182px);border-radius:2px}
+
+/* ── Viewport ── */
+.vp{position:absolute;top:16px;left:16px;right:16px;bottom:16px;border-radius:42px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:118px;height:34px;background:#050506;border-radius:18px;z-index:300;pointer-events:none}
+
+/* ── Status bar ── */
+.status{height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 9px;flex-shrink:0;z-index:10}
+.status span{font-size:12px;font-weight:500;color:var(--text)}
+
+/* ── Screens ── */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateX(32px);transition:opacity .22s ease,transform .22s ease}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.sa{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sa::-webkit-scrollbar{display:none}
+
+/* ── Nav ── */
+.nav{height:var(--nav-h);background:var(--navy);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:4px}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 12px;-webkit-tap-highlight-color:transparent;transition:opacity .1s;position:relative}
+.ni:active{opacity:.6}
+.ni svg{width:22px;height:22px;stroke:#475569;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .18s}
+.ni .lbl{font-size:10px;font-weight:500;color:#475569;transition:color .18s;letter-spacing:.01em}
+.ni.on svg{stroke:var(--accent)}
+.ni.on .lbl{color:var(--accent);font-weight:600}
+.nav-badge{position:absolute;top:2px;right:8px;width:16px;height:16px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;border:2px solid var(--navy)}
+
+/* ── Typography ── */
+.t-disp{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.3px}
+.t-h2{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.t-h3{font-size:16px;font-weight:600;color:var(--text)}
+.t-sub{font-size:13px;color:var(--sub);line-height:1.5}
+.t-cap{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.px{padding:0 20px}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.card-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s,transform .12s}
+.card-tap:active{background:#F8FAFC;transform:scale(.99)}
+
+/* ── Metrics ── */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px;margin-bottom:24px}
+.metric{border-radius:16px;padding:14px 16px}
+.metric-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;letter-spacing:-.5px}
+.metric-lbl{font-size:12px;font-weight:500}
+.metric-delta{font-size:11px;margin-top:6px;font-weight:500}
+
+/* ── Status pill ── */
+.pill-status{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.ps-pending{background:var(--amber-l);color:var(--amber)}
+.ps-verified{background:var(--green-l);color:var(--green)}
+.ps-flagged{background:var(--red-l);color:var(--red)}
+.ps-review{background:var(--accent-l);color:var(--accent)}
+
+/* ── IMPROVEMENT 2: Enhanced risk bar with threshold markers ── */
+.risk-wrap{margin-top:8px}
+.risk-track{height:4px;border-radius:2px;background:linear-gradient(to right,#059669 0%,#D97706 45%,#DC2626 100%);position:relative}
+.risk-dot{position:absolute;top:-5px;width:14px;height:14px;border-radius:50%;background:white;border:2.5px solid;transform:translateX(-50%);box-shadow:0 1px 4px rgba(0,0,0,.18);transition:left .4s ease}
+
+/* Threshold lines */
+.risk-thresh{position:absolute;top:-6px;width:2px;height:16px;border-radius:1px;transform:translateX(-50%)}
+.risk-thresh-lbl{position:absolute;font-size:9px;font-weight:600;top:13px;transform:translateX(-50%);white-space:nowrap;letter-spacing:.02em}
+.thresh-clear{background:rgba(5,150,105,.5)}
+.thresh-edd{background:rgba(220,38,38,.5)}
+.thresh-clear-lbl{color:var(--green)}
+.thresh-edd-lbl{color:var(--red)}
+
+/* Full-size risk bar for case detail */
+.risk-track-lg{height:6px;border-radius:3px;background:linear-gradient(to right,#059669 0%,#D97706 45%,#DC2626 100%);position:relative}
+.risk-dot-lg{position:absolute;top:-7px;width:20px;height:20px;border-radius:50%;background:white;border:3px solid;transform:translateX(-50%);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.risk-thresh-lg{position:absolute;top:-8px;width:2px;height:22px;border-radius:1px;transform:translateX(-50%)}
+.risk-thresh-lbl-lg{position:absolute;font-size:10px;font-weight:600;top:18px;transform:translateX(-50%);white-space:nowrap}
+
+.risk-lbl{font-size:11px;font-weight:500;margin-top:18px}
+
+/* ── Case row ── */
+.case-row{display:flex;align-items:flex-start;gap:12px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.case-row:active{background:#F8FAFC}
+.case-init{display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.case-body{flex:1;min-width:0}
+.case-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1px}
+.case-meta{font-size:12px;color:var(--sub)}
+.case-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.case-time{font-size:11px;color:var(--muted)}
+
+/* ── Filter pills ── */
+.filter-row{display:flex;gap:7px;padding:0 20px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.filter-row::-webkit-scrollbar{display:none}
+.fpill{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--sub);white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:all .14s}
+.fpill.on{background:var(--navy);color:white;border-color:var(--navy)}
+
+/* ── Back btn ── */
+.back-btn{width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:4px 0 12px 16px;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.back-btn:active{transform:scale(.88)}
+.back-btn svg{width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Section header ── */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin-bottom:10px}
+.sec-more{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
+
+/* ── Check rows ── */
+.check-list{margin:0 20px 16px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+.check-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.check-row:last-child{border-bottom:none}
+.check-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700}
+.check-label{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.check-val{font-size:12px;color:var(--sub)}
+.ci-pass{background:var(--green-l);color:var(--green)}
+.ci-fail{background:var(--red-l);color:var(--red)}
+.ci-warn{background:var(--amber-l);color:var(--amber)}
+.ci-info{background:var(--accent-l);color:var(--accent)}
+
+/* ── IMPROVEMENT 3: Audit trail ── */
+.audit-section{margin:0 20px 20px}
+.audit-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s;user-select:none}
+.audit-toggle.open{border-radius:12px 12px 0 0;border-bottom-color:var(--border)}
+.audit-toggle:active{background:var(--bg)}
+.audit-toggle-left{display:flex;align-items:center;gap:8px}
+.audit-chevron{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s ease}
+.audit-chevron.open{transform:rotate(180deg)}
+.audit-log{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;max-height:0;transition:max-height .3s ease}
+.audit-log.open{max-height:400px}
+.audit-entry{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.audit-entry:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.audit-time{font-size:11px;color:var(--muted);flex-shrink:0;width:52px;padding-top:1px}
+.audit-text{font-size:12px;color:var(--text);line-height:1.5;flex:1}
+.audit-actor{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* ── Action bar ── */
+.action-bar{padding:12px 20px 16px;background:var(--bg);flex-shrink:0;display:flex;gap:8px;border-top:1px solid var(--border)}
+.act{flex:1;padding:14px 8px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s,transform .12s;text-align:center}
+.act:active{opacity:.8;transform:scale(.97)}
+.act-approve{background:var(--green-l);color:var(--green)}
+.act-decline{background:var(--red-l);color:var(--red)}
+.act-escalate{background:var(--amber-l);color:var(--amber)}
+
+/* ── Alert card ── */
+.alert-card{margin:0 20px 10px;padding:16px;transition:opacity .28s,transform .28s}
+.alert-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.alert-acts{display:flex;gap:7px;margin-top:12px}
+.alert-act{flex:1;padding:9px 6px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .12s}
+.alert-act:active{opacity:.75}
+
+/* ── Empty state ── */
+.empty{padding:48px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.empty-icon{width:52px;height:52px;background:var(--green-l);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px}
+
+/* ── Funnel ── */
+.funnel-row{margin:0 20px 8px;display:flex;align-items:center;gap:10px}
+.funnel-lbl{font-size:12px;font-weight:500;color:var(--sub);width:90px;flex-shrink:0}
+.funnel-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.funnel-bar{height:100%;border-radius:3px;background:var(--accent);width:0%;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.funnel-pct{font-size:12px;font-weight:600;color:var(--text);width:38px;text-align:right;flex-shrink:0}
+
+/* ── Week chart ── */
+.week-chart{display:flex;align-items:flex-end;gap:6px;padding:0 20px;height:64px;margin-bottom:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-fill{width:100%;border-radius:4px 4px 0 0;background:var(--accent-m);min-height:4px}
+.bar-fill.today{background:var(--accent)}
+.bar-day{font-size:10px;color:var(--muted);font-weight:500}
+
+/* ── AI ── */
+.ai-hdr{display:flex;align-items:center;gap:12px;padding:16px 20px 12px;flex-shrink:0}
+.ai-avi{width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-area{flex:1;overflow-y:auto;padding:8px 20px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
+.chat-area::-webkit-scrollbar{display:none}
+.msg-row{display:flex;gap:9px;align-items:flex-end}
+.msg-row.me{flex-direction:row-reverse}
+.bot-avi{width:28px;height:28px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bubble{max-width:80%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55}
+.bubble.bot{background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.bubble.me{background:var(--accent);color:white;border-bottom-right-radius:4px}
+.ai-bar{display:flex;gap:9px;align-items:center;padding:10px 20px 14px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.ai-input{flex:1;background:var(--bg);border:none;border-radius:22px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none}
+.ai-send{width:40px;height:40px;background:var(--accent);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:opacity .12s}
+.ai-send:active{opacity:.8}
+.ai-send svg{stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;width:16px;height:16px}
+.suggest-chip{display:inline-flex;align-items:center;padding:8px 13px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:border-color .12s,color .12s}
+.suggest-chip:active{border-color:var(--accent);color:var(--accent)}
+.typing{display:flex;gap:4px;align-items:center;padding:8px 12px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* ── Modal ── */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .22s;display:flex;align-items:flex-end}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.modal-close{width:30px;height:30px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--sub)}
+.modal-opt{width:100%;padding:14px 16px;background:var(--bg);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;margin-bottom:8px;-webkit-tap-highlight-color:transparent;transition:background .12s}
+.modal-opt:active{background:var(--border)}
+
+/* ── Toast ── */
+#toast{position:absolute;bottom:80px;left:20px;right:20px;padding:13px 18px;background:var(--navy);color:white;border-radius:14px;font-size:13px;font-weight:600;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:400;display:flex;align-items:center;justify-content:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="phone">
+ <div class="vp">
+  <div class="island"></div>
+
+  <div class="screens">
+
+   <!-- ════════════════════════════════ -->
+   <!-- HOME — opens directly, no splash -->
+   <!-- ════════════════════════════════ -->
+   <div class="screen active" id="s_home" data-tab="home">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="sa" style="padding-top:4px">
+
+     <!-- IMPROVEMENT 1: Briefing card replaces splash -->
+     <div style="margin:0 20px 20px;padding:16px;background:var(--navy);border-radius:18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+       <div style="width:32px;height:32px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+       </div>
+       <div>
+        <div style="font-size:13px;font-weight:600;color:white">Good morning, Laura</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px">Acme FinTech · Compliance Lead</div>
+       </div>
+       <div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,.2)"></div>
+      </div>
+      <div style="font-size:22px;font-weight:700;color:white;letter-spacing:-.5px;line-height:1.2;margin-bottom:6px">3 cases need<br>your attention today</div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+       <div style="flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px">
+        <div style="font-size:18px;font-weight:700;color:var(--red)">3</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Flagged</div>
+       </div>
+       <div style="flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px">
+        <div style="font-size:18px;font-weight:700;color:var(--amber)">12</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Pending</div>
+       </div>
+       <div style="flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px">
+        <div style="font-size:18px;font-weight:700;color:#10B981">24</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Auto-cleared</div>
+       </div>
+      </div>
+     </div>
+
+     <!-- Metrics -->
+     <div class="metric-grid">
+      <div class="metric" style="background:var(--green-l)">
+       <div class="metric-val" style="color:var(--green)">84</div>
+       <div class="metric-lbl" style="color:var(--green)">Verified today</div>
+       <div class="metric-delta" style="color:var(--green)">✓ On track</div>
+      </div>
+      <div class="metric" style="background:var(--accent-l)">
+       <div class="metric-val" style="color:var(--accent)">8.4%</div>
+       <div class="metric-lbl" style="color:var(--accent)">Drop-off rate</div>
+       <div class="metric-delta" style="color:var(--green)">↓ from 40%</div>
+      </div>
+     </div>
+
+     <!-- Priority cases -->
+     <div class="sec-hdr"><span class="t-h3">Needs attention</span><span class="sec-more" onclick="goTab('cases')">All cases</span></div>
+     <div style="margin:0 20px 24px;border:1px solid var(--border);border-radius:16px;overflow:hidden">
+      <div class="case-row card-tap" onclick="openCase('ar')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--red-l);color:var(--red)">AR</div>
+       <div class="case-body">
+        <div class="case-name">Ahmed Rashid</div>
+        <div class="case-meta">Passport · UAE · PEP flagged</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+          <div class="risk-dot" style="left:74%;border-color:var(--red)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--red);margin-top:20px">Score 0.74 — above EDD threshold</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">2h</span><span class="pill-status ps-flagged">Flagged</span></div>
+      </div>
+      <div class="case-row card-tap" onclick="openCase('mc')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--accent-l);color:var(--accent)">MC</div>
+       <div class="case-body">
+        <div class="case-name">Marcus Chen</div>
+        <div class="case-meta">Passport · Ireland · Re-submission</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+          <div class="risk-dot" style="left:42%;border-color:var(--amber)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--amber);margin-top:20px">Score 0.42 — review required</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">14m</span><span class="pill-status ps-pending">Pending</span></div>
+      </div>
+      <div class="case-row card-tap" onclick="openCase('yp')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--amber-l);color:var(--amber)">YP</div>
+       <div class="case-body">
+        <div class="case-name">Yuki Patel</div>
+        <div class="case-meta">Passport · Japan · High volume</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+          <div class="risk-dot" style="left:58%;border-color:var(--amber)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--amber);margin-top:20px">Score 0.58 — review required</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">5h</span><span class="pill-status ps-review">Review</span></div>
+      </div>
+     </div>
+
+     <!-- Funnel preview -->
+     <div class="sec-hdr"><span class="t-h3">Today's funnel</span><span class="sec-more" onclick="goTab('insights')">Full view</span></div>
+     <div style="margin:0 20px 8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+       <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">107</div><div style="font-size:11px;color:var(--sub)">Started</div></div>
+       <div style="display:flex;align-items:center;color:var(--border)">→</div>
+       <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">98</div><div style="font-size:11px;color:var(--sub)">Submitted</div></div>
+       <div style="display:flex;align-items:center;color:var(--border)">→</div>
+       <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--green)">84</div><div style="font-size:11px;color:var(--sub)">Approved</div></div>
+       <div style="display:flex;align-items:center;color:var(--border)">→</div>
+       <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--amber)">12</div><div style="font-size:11px;color:var(--sub)">Pending</div></div>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px">
+       <div style="height:100%;width:78.5%;background:var(--green);border-radius:3px"></div>
+      </div>
+      <div style="font-size:12px;color:var(--sub)">78.5% completion rate <span style="color:var(--green);font-weight:600">↑ 4.1% vs last week</span></div>
+     </div>
+     <div style="height:24px"></div>
+    </div>
+   </div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- CASES                           -->
+   <!-- ════════════════════════════════ -->
+   <div class="screen" id="s_cases" data-tab="cases">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div style="flex-shrink:0;padding-top:4px">
+     <div class="px" style="margin-bottom:14px">
+      <div class="t-disp" style="margin-bottom:4px">Cases</div>
+      <div class="t-sub">99 total · Week of Apr 14</div>
+     </div>
+     <div class="filter-row" id="case-filters">
+      <div class="fpill on" onclick="filterCases('All',this)">All</div>
+      <div class="fpill" onclick="filterCases('Flagged',this)">Flagged</div>
+      <div class="fpill" onclick="filterCases('Pending',this)">Pending</div>
+      <div class="fpill" onclick="filterCases('Review',this)">Under review</div>
+      <div class="fpill" onclick="filterCases('Verified',this)">Verified</div>
+     </div>
+    </div>
+    <div class="sa">
+     <div style="margin:0 20px 8px;border:1px solid var(--border);border-radius:16px;overflow:hidden" id="clist">
+      <div class="case-row card-tap" data-s="Flagged" id="cr-ar" onclick="openCase('ar')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--red-l);color:var(--red)">AR</div>
+       <div class="case-body">
+        <div class="case-name">Ahmed Rashid</div>
+        <div class="case-meta">Passport · UAE · PEP match</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:74%;border-color:var(--red)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--red);margin-top:6px">0.74 · High</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">2h</span><span class="pill-status ps-flagged" id="cs-ar">Flagged</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Pending" id="cr-mc" onclick="openCase('mc')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--accent-l);color:var(--accent)">MC</div>
+       <div class="case-body">
+        <div class="case-name">Marcus Chen</div>
+        <div class="case-meta">Passport · Ireland</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:42%;border-color:var(--amber)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--amber);margin-top:6px">0.42 · Medium</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">14m</span><span class="pill-status ps-pending" id="cs-mc">Pending</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Review" id="cr-yp" onclick="openCase('yp')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--amber-l);color:var(--amber)">YP</div>
+       <div class="case-body">
+        <div class="case-name">Yuki Patel</div>
+        <div class="case-meta">Passport · Japan · €25k+ vol</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:58%;border-color:var(--amber)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--amber);margin-top:6px">0.58 · Medium</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">5h</span><span class="pill-status ps-review" id="cs-yp">Under review</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Pending" id="cr-jm" onclick="openCase('jm')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--bg);color:var(--sub)">JM</div>
+       <div class="case-body">
+        <div class="case-name">James Murphy</div>
+        <div class="case-meta">Passport · Ireland</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:18%;border-color:var(--green)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--green);margin-top:6px">0.18 · Low</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">4h</span><span class="pill-status ps-pending" id="cs-jm">Pending</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Verified" onclick="openCase('sf')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--green-l);color:var(--green)">SF</div>
+       <div class="case-body">
+        <div class="case-name">Sara Fernández</div>
+        <div class="case-meta">National ID · Spain</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:12%;border-color:var(--green)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--green);margin-top:6px">0.12 · Low · auto-cleared</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">1h</span><span class="pill-status ps-verified">Verified</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Verified" onclick="openCase('lk')">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:#F5F3FF;color:#7C3AED">LK</div>
+       <div class="case-body">
+        <div class="case-name">Léa Kowalski</div>
+        <div class="case-meta">Driving licence · France</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:9%;border-color:var(--green)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--green);margin-top:6px">0.09 · Low · auto-cleared</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">3h</span><span class="pill-status ps-verified">Verified</span></div>
+      </div>
+      <div class="case-row card-tap" data-s="Verified" onclick="openCase('ob')" style="border-radius:0 0 16px 16px;border-bottom:none">
+       <div class="case-init" style="width:40px;height:40px;border-radius:12px;font-size:13px;background:var(--bg);color:var(--sub)">OB</div>
+       <div class="case-body">
+        <div class="case-name">Olivia Brennan</div>
+        <div class="case-meta">National ID · Ireland</div>
+        <div class="risk-wrap">
+         <div class="risk-track">
+          <div class="risk-thresh thresh-clear" style="left:20%"></div>
+          <div class="risk-thresh thresh-edd" style="left:45%"></div>
+          <div class="risk-dot" style="left:8%;border-color:var(--green)"></div>
+         </div>
+         <div class="risk-lbl" style="color:var(--green);margin-top:6px">0.08 · Low · auto-cleared</div>
+        </div>
+       </div>
+       <div class="case-right"><span class="case-time">6h</span><span class="pill-status ps-verified">Verified</span></div>
+      </div>
+     </div>
+     <div style="height:24px"></div>
+    </div>
+   </div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- ALERTS                          -->
+   <!-- ════════════════════════════════ -->
+   <div class="screen" id="s_alerts" data-tab="alerts">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div style="flex-shrink:0;padding-top:4px">
+     <div class="px" style="margin-bottom:16px">
+      <div class="t-disp" style="margin-bottom:4px">AML Alerts</div>
+      <div class="t-sub" id="alert-subtitle">3 require review</div>
+     </div>
+    </div>
+    <div class="sa" id="alerts-body">
+     <!-- auto-clear banner -->
+     <div style="margin:0 20px 16px;padding:12px 16px;background:var(--green-l);border-radius:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:34px;height:34px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+       <div style="font-size:13px;font-weight:700;color:var(--green)">24 alerts auto-cleared</div>
+       <div style="font-size:12px;color:var(--green);opacity:.8">AI confidence 97%+ · No action needed</div>
+      </div>
+     </div>
+     <!-- alert 1: Ahmed -->
+     <div class="card card-tap alert-card" id="alert-ar">
+      <div class="alert-head">
+       <div style="display:flex;align-items:center;gap:10px">
+        <div class="case-init" style="width:38px;height:38px;border-radius:10px;font-size:13px;background:var(--red-l);color:var(--red)">AR</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Ahmed Rashid</div><div style="font-size:12px;color:var(--sub)">Passport · UAE</div></div>
+       </div>
+       <span class="pill-status ps-flagged">High risk</span>
+      </div>
+      <div style="margin-bottom:10px">
+       <div class="risk-track">
+        <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+        <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+        <div class="risk-dot" style="left:74%;border-color:var(--red)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:20px"><span style="font-size:11px;color:var(--muted)">Risk score</span><span style="font-size:11px;font-weight:700;color:var(--red)">0.74 — above EDD threshold</span></div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.55;margin-bottom:4px">PEP indicator matched. Monthly volume €28k+ flagged. EDD required before any decision.</div>
+      <div class="alert-acts">
+       <button class="alert-act" style="background:var(--green-l);color:var(--green)" onclick="resolveAlert('ar','Approved')">Approve</button>
+       <button class="alert-act" style="background:var(--amber-l);color:var(--amber)" onclick="openEscalate('Ahmed Rashid')">Escalate</button>
+       <button class="alert-act" style="background:var(--red-l);color:var(--red)" onclick="resolveAlert('ar','Declined')">Decline</button>
+      </div>
+     </div>
+     <!-- alert 2: Yuki -->
+     <div class="card card-tap alert-card" id="alert-yp">
+      <div class="alert-head">
+       <div style="display:flex;align-items:center;gap:10px">
+        <div class="case-init" style="width:38px;height:38px;border-radius:10px;font-size:13px;background:var(--amber-l);color:var(--amber)">YP</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Yuki Patel</div><div style="font-size:12px;color:var(--sub)">Passport · Japan</div></div>
+       </div>
+       <span class="pill-status ps-review">Medium risk</span>
+      </div>
+      <div style="margin-bottom:10px">
+       <div class="risk-track">
+        <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+        <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+        <div class="risk-dot" style="left:58%;border-color:var(--amber)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:20px"><span style="font-size:11px;color:var(--muted)">Risk score</span><span style="font-size:11px;font-weight:700;color:var(--amber)">0.58 — review required</span></div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.55;margin-bottom:4px">High declared volume €22k/month. Cross-border transfers to 3 jurisdictions. EDD in progress.</div>
+      <div class="alert-acts">
+       <button class="alert-act" style="background:var(--green-l);color:var(--green)" onclick="resolveAlert('yp','Approved')">Approve</button>
+       <button class="alert-act" style="background:var(--amber-l);color:var(--amber)" onclick="openEscalate('Yuki Patel')">Escalate</button>
+       <button class="alert-act" style="background:var(--red-l);color:var(--red)" onclick="resolveAlert('yp','Declined')">Decline</button>
+      </div>
+     </div>
+     <!-- alert 3: Marcus -->
+     <div class="card card-tap alert-card" id="alert-mc">
+      <div class="alert-head">
+       <div style="display:flex;align-items:center;gap:10px">
+        <div class="case-init" style="width:38px;height:38px;border-radius:10px;font-size:13px;background:var(--accent-l);color:var(--accent)">MC</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Marcus Chen</div><div style="font-size:12px;color:var(--sub)">Passport · Ireland</div></div>
+       </div>
+       <span class="pill-status ps-pending">Low–Med</span>
+      </div>
+      <div style="margin-bottom:10px">
+       <div class="risk-track">
+        <div class="risk-thresh thresh-clear" style="left:20%"><span class="risk-thresh-lbl thresh-clear-lbl" style="left:50%">Auto</span></div>
+        <div class="risk-thresh thresh-edd" style="left:45%"><span class="risk-thresh-lbl thresh-edd-lbl" style="left:50%">EDD</span></div>
+        <div class="risk-dot" style="left:42%;border-color:var(--amber)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:20px"><span style="font-size:11px;color:var(--muted)">Risk score</span><span style="font-size:11px;font-weight:700;color:var(--amber)">0.42 — review required</span></div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.55;margin-bottom:4px">Document re-submission flagged. Initial capture failed edge detection. Second submission in queue.</div>
+      <div class="alert-acts">
+       <button class="alert-act" style="background:var(--green-l);color:var(--green)" onclick="resolveAlert('mc','Approved')">Approve</button>
+       <button class="alert-act" style="background:var(--amber-l);color:var(--amber)" onclick="openEscalate('Marcus Chen')">Escalate</button>
+       <button class="alert-act" style="background:var(--red-l);color:var(--red)" onclick="resolveAlert('mc','Declined')">Decline</button>
+      </div>
+     </div>
+     <!-- empty state (hidden until all cleared) -->
+     <div class="empty" id="alerts-empty" style="display:none">
+      <div class="empty-icon">✓</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">Queue cleared</div>
+      <div class="t-sub" style="text-align:center">All AML alerts have been reviewed. The AI will surface new flags as they arise.</div>
+     </div>
+     <div style="height:24px"></div>
+    </div>
+   </div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- INSIGHTS                        -->
+   <!-- ════════════════════════════════ -->
+   <div class="screen" id="s_insights" data-tab="insights">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="sa" style="padding-top:4px">
+     <div class="px" style="margin-bottom:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+       <div class="t-disp">Insights</div>
+       <!-- Time period selector -->
+       <div style="display:flex;gap:1px;background:var(--border);border-radius:10px;padding:2px">
+        <div id="tp-week" style="padding:5px 10px;font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;background:var(--surface);color:var(--text)" onclick="setPeriod('week',this)">Week</div>
+        <div id="tp-month" style="padding:5px 10px;font-size:11px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--sub)" onclick="setPeriod('month',this)">Month</div>
+        <div id="tp-quarter" style="padding:5px 10px;font-size:11px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--sub)" onclick="setPeriod('quarter',this)">Quarter</div>
+       </div>
+      </div>
+      <div class="t-sub" id="period-label">Week of Apr 14 – Apr 20</div>
+     </div>
+
+     <!-- Bar chart -->
+     <div class="px" style="margin:16px 0 6px"><span class="t-cap">Verifications per day</span></div>
+     <div class="week-chart" id="week-chart">
+      <div class="bar-col"><div class="bar-fill" style="height:48px"></div><div class="bar-day" id="d0">Mon</div></div>
+      <div class="bar-col"><div class="bar-fill" style="height:38px"></div><div class="bar-day" id="d1">Tue</div></div>
+      <div class="bar-col"><div class="bar-fill" style="height:52px"></div><div class="bar-day" id="d2">Wed</div></div>
+      <div class="bar-col"><div class="bar-fill" style="height:42px"></div><div class="bar-day" id="d3">Thu</div></div>
+      <div class="bar-col"><div class="bar-fill" style="height:60px"></div><div class="bar-day" id="d4">Fri</div></div>
+      <div class="bar-col"><div class="bar-fill today" style="height:44px"></div><div class="bar-day" id="d5" style="color:var(--accent);font-weight:600">Sat</div></div>
+      <div class="bar-col"><div class="bar-fill" style="height:10px;background:var(--border)"></div><div class="bar-day" id="d6">Sun</div></div>
+     </div>
+     <div style="padding:0 20px;margin-bottom:24px"><span id="chart-caption" style="font-size:11px;color:var(--muted)">280 verifications this week · avg 46/day</span></div>
+
+     <!-- KPIs -->
+     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 20px;margin-bottom:24px">
+      <div class="card-sm" style="padding:12px;text-align:center">
+       <div style="font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.5px" id="kpi-review">1m47s</div>
+       <div style="font-size:11px;color:var(--sub);margin-top:3px">Avg review</div>
+      </div>
+      <div class="card-sm" style="padding:12px;text-align:center">
+       <div style="font-size:20px;font-weight:700;color:var(--green);letter-spacing:-.5px" id="kpi-fp">6.2%</div>
+       <div style="font-size:11px;color:var(--sub);margin-top:3px">False pos.</div>
+      </div>
+      <div class="card-sm" style="padding:12px;text-align:center">
+       <div style="font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.5px" id="kpi-onboard">8m12s</div>
+       <div style="font-size:11px;color:var(--sub);margin-top:3px">Avg onboard</div>
+      </div>
+     </div>
+
+     <!-- Funnel -->
+     <div class="px" style="margin-bottom:12px"><span class="t-cap">Onboarding funnel</span></div>
+     <div id="funnel-wrap">
+      <div class="funnel-row"><div class="funnel-lbl">Started</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%" data-w="100%"></div></div><div class="funnel-pct">100%</div></div>
+      <div class="funnel-row"><div class="funnel-lbl">Liveness</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%" data-w="96%"></div></div><div class="funnel-pct">96%</div></div>
+      <div class="funnel-row"><div class="funnel-lbl">Document</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%" data-w="91%"></div></div><div class="funnel-pct">91%</div></div>
+      <div class="funnel-row"><div class="funnel-lbl">Questions</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%" data-w="86%"></div></div><div class="funnel-pct">86%</div></div>
+      <div class="funnel-row"><div class="funnel-lbl">Submitted</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%" data-w="83%"></div></div><div class="funnel-pct">83%</div></div>
+      <div class="funnel-row"><div class="funnel-lbl">Approved</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:0%;background:var(--green)" data-w="78%"></div></div><div class="funnel-pct" style="color:var(--green)">78%</div></div>
+     </div>
+     <div style="margin:10px 20px 24px;padding:12px 14px;background:var(--green-l);border-radius:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--green)">Drop-off: 40% → 8.4%</div>
+      <div style="font-size:12px;color:var(--green);margin-top:3px;opacity:.8">Guided onboarding flow driving completion</div>
+     </div>
+
+     <!-- Time saved -->
+     <div class="px" style="margin-bottom:12px"><span class="t-cap">Time saved vs manual process</span></div>
+     <div style="margin:0 20px 8px;padding:16px;background:var(--navy);border-radius:16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+       <div style="font-size:28px;font-weight:700;color:white;letter-spacing:-.5px" id="kpi-saved">14.2h</div>
+       <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:3px">document-chasing hours saved</div>
+      </div>
+      <div style="text-align:right">
+       <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.5)">Equiv.</div>
+       <div style="font-size:20px;font-weight:700;color:var(--accent)" id="kpi-cost">€315</div>
+       <div style="font-size:11px;color:rgba(255,255,255,.35)">ops cost saved</div>
+      </div>
+     </div>
+     <div style="height:24px"></div>
+    </div>
+   </div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- AI                              -->
+   <!-- ════════════════════════════════ -->
+   <div class="screen" id="s_ai" data-tab="ai">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="ai-hdr" style="flex-shrink:0">
+     <div class="ai-avi">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg>
+     </div>
+     <div><div style="font-size:17px;font-weight:700;color:var(--text)">Compliance AI</div><div class="t-sub">KYC · AML · Regulatory guidance</div></div>
+    </div>
+    <div style="flex-shrink:0;padding:0 20px 12px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none" id="suggestions">
+     <div class="suggest-chip" onclick="askAI(this.textContent)">PEP handling</div>
+     <div class="suggest-chip" onclick="askAI(this.textContent)">AMLD6</div>
+     <div class="suggest-chip" onclick="askAI(this.textContent)">EDD explained</div>
+     <div class="suggest-chip" onclick="askAI(this.textContent)">False positive benchmarks</div>
+    </div>
+    <div class="chat-area" id="chat-area">
+     <div class="msg-row">
+      <div class="bot-avi"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg></div>
+      <div class="bubble bot">Hi Laura. Ask me anything about KYC requirements, AML procedures, or regulatory guidance. I can also help triage specific cases.</div>
+     </div>
+    </div>
+    <div class="ai-bar">
+     <input class="ai-input" id="ai-input" placeholder="Ask a compliance question…" onkeydown="if(event.key==='Enter')sendAI()">
+     <button class="ai-send" onclick="sendAI()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+     </button>
+    </div>
+   </div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- CASE DETAILS                    -->
+   <!-- ════════════════════════════════ -->
+
+   <!-- Ahmed Rashid -->
+   <div class="screen" id="s_ar">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div class="sa">
+     <div class="px" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+       <div style="display:flex;align-items:center;gap:12px">
+        <div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--red-l);color:var(--red)">AR</div>
+        <div><div class="t-h2">Ahmed Rashid</div><div class="t-sub">UAE · Submitted 2h ago</div></div>
+       </div>
+       <span class="pill-status ps-flagged" id="det-status-ar">Flagged</span>
+      </div>
+      <!-- Large risk bar -->
+      <div class="card-sm" style="padding:14px 16px;margin-bottom:16px">
+       <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--red)">0.74</span></div>
+       <div class="risk-track-lg">
+        <div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div>
+        <div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div>
+        <div class="risk-dot-lg" style="left:74%;border-color:var(--red)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:28px">
+        <span style="font-size:11px;color:var(--green)">Low</span>
+        <span style="font-size:11px;color:var(--amber)">Review</span>
+        <span style="font-size:11px;color:var(--red)">High / EDD</span>
+       </div>
+       <div style="margin-top:10px;padding:8px 10px;background:var(--red-l);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--red)">Above EDD threshold — senior sign-off required</div>
+       </div>
+      </div>
+     </div>
+     <div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div>
+     <div class="check-list">
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">97.2% conf.</div></div>
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Passport · Exp 2028</div></div>
+      <div class="check-row"><div class="check-icon ci-fail">!</div><div class="check-label">PEP screening</div><div class="check-val" style="color:var(--red)">Match found</div></div>
+      <div class="check-row"><div class="check-icon ci-warn">⚠</div><div class="check-label">Transaction volume</div><div class="check-val" style="color:var(--amber)">€28k+/mo</div></div>
+      <div class="check-row"><div class="check-icon ci-warn">⚠</div><div class="check-label">Jurisdiction risk</div><div class="check-val" style="color:var(--amber)">Multi-region</div></div>
+     </div>
+     <!-- EDD notice -->
+     <div style="margin:0 20px 16px;padding:14px 16px;background:var(--red-l);border-radius:14px;border-left:3px solid var(--red)">
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px">Enhanced Due Diligence required</div>
+      <div style="font-size:12px;color:var(--red);line-height:1.55;opacity:.85">PEP match + high volume requires senior sign-off and source of funds documentation. Do not approve without EDD completion.</div>
+     </div>
+     <!-- IMPROVEMENT 3: Audit trail -->
+     <div class="audit-section">
+      <div class="audit-toggle" id="audit-toggle-ar" onclick="toggleAudit('ar')">
+       <div class="audit-toggle-left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span style="font-size:13px;font-weight:500;color:var(--sub)">Activity log</span>
+        <span style="font-size:11px;font-weight:600;padding:2px 7px;background:var(--bg);border-radius:20px;color:var(--muted)">4 events</span>
+       </div>
+       <svg class="audit-chevron" id="audit-chev-ar" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="audit-log" id="audit-log-ar">
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--red)"></div>
+        <div class="audit-time">09:31</div>
+        <div><div class="audit-text">PEP match flagged — auto-escalated by AI</div><div class="audit-actor">System · OnboardIQ AML Engine</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--amber)"></div>
+        <div class="audit-time">09:29</div>
+        <div><div class="audit-text">Document verified — passport accepted</div><div class="audit-actor">System · Document Verification</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--green)"></div>
+        <div class="audit-time">09:27</div>
+        <div><div class="audit-text">Liveness check passed — 97.2% confidence</div><div class="audit-actor">System · Biometric Engine</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--accent)"></div>
+        <div class="audit-time">09:24</div>
+        <div><div class="audit-text">Case created — onboarding flow initiated</div><div class="audit-actor">Customer · Ahmed Rashid</div></div>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="action-bar">
+     <button class="act act-decline" onclick="decide('ar','Declined')">Decline</button>
+     <button class="act act-escalate" onclick="openEscalate('Ahmed Rashid')">Escalate EDD</button>
+    </div>
+   </div>
+
+   <!-- Marcus Chen -->
+   <div class="screen" id="s_mc">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div class="sa">
+     <div class="px" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+       <div style="display:flex;align-items:center;gap:12px">
+        <div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--accent-l);color:var(--accent)">MC</div>
+        <div><div class="t-h2">Marcus Chen</div><div class="t-sub">Ireland · Submitted 14m ago</div></div>
+       </div>
+       <span class="pill-status ps-pending" id="det-status-mc">Pending</span>
+      </div>
+      <div class="card-sm" style="padding:14px 16px;margin-bottom:16px">
+       <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--amber)">0.42</span></div>
+       <div class="risk-track-lg">
+        <div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div>
+        <div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div>
+        <div class="risk-dot-lg" style="left:42%;border-color:var(--amber)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:28px">
+        <span style="font-size:11px;color:var(--green)">Low</span>
+        <span style="font-size:11px;color:var(--amber)">Review</span>
+        <span style="font-size:11px;color:var(--red)">High / EDD</span>
+       </div>
+       <div style="margin-top:10px;padding:8px 10px;background:var(--amber-l);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--amber)">Between thresholds — human review required</div>
+       </div>
+      </div>
+     </div>
+     <div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div>
+     <div class="check-list">
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">98.4% conf.</div></div>
+      <div class="check-row"><div class="check-icon ci-warn">⚠</div><div class="check-label">Document capture</div><div class="check-val" style="color:var(--amber)">Re-submitted</div></div>
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div>
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Transaction volume</div><div class="check-val">€1–5k/mo</div></div>
+      <div class="check-row"><div class="check-icon ci-info">i</div><div class="check-label">AML screening</div><div class="check-val">Awaiting review</div></div>
+     </div>
+     <div style="margin:0 20px 16px;padding:14px 16px;background:var(--accent-l);border-radius:14px;border-left:3px solid var(--accent)">
+      <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px">Elevated score — re-submission only</div>
+      <div style="font-size:12px;color:var(--accent);line-height:1.55;opacity:.85">Score elevated due to re-submission flag, not AML risk. Second capture passes all quality checks. Safe to approve.</div>
+     </div>
+     <div class="audit-section">
+      <div class="audit-toggle" id="audit-toggle-mc" onclick="toggleAudit('mc')">
+       <div class="audit-toggle-left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span style="font-size:13px;font-weight:500;color:var(--sub)">Activity log</span>
+        <span style="font-size:11px;font-weight:600;padding:2px 7px;background:var(--bg);border-radius:20px;color:var(--muted)">5 events</span>
+       </div>
+       <svg class="audit-chevron" id="audit-chev-mc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="audit-log" id="audit-log-mc">
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--accent)"></div>
+        <div class="audit-time">09:43</div>
+        <div><div class="audit-text">Case queued for human review</div><div class="audit-actor">System · OnboardIQ Router</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--green)"></div>
+        <div class="audit-time">09:42</div>
+        <div><div class="audit-text">Second capture accepted — edges detected, quality pass</div><div class="audit-actor">System · Document Verification</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--red)"></div>
+        <div class="audit-time">09:38</div>
+        <div><div class="audit-text">First capture rejected — edge detection failed</div><div class="audit-actor">System · Document Verification</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--green)"></div>
+        <div class="audit-time">09:35</div>
+        <div><div class="audit-text">Liveness check passed — 98.4% confidence</div><div class="audit-actor">System · Biometric Engine</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--accent)"></div>
+        <div class="audit-time">09:33</div>
+        <div><div class="audit-text">Case created — onboarding flow initiated</div><div class="audit-actor">Customer · Marcus Chen</div></div>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="action-bar">
+     <button class="act act-decline" onclick="decide('mc','Declined')">Decline</button>
+     <button class="act act-escalate" onclick="openEscalate('Marcus Chen')">Escalate</button>
+     <button class="act act-approve" onclick="decide('mc','Approved')">Approve</button>
+    </div>
+   </div>
+
+   <!-- Yuki Patel -->
+   <div class="screen" id="s_yp">
+    <div class="status"><span>9:41</span><span>●●● 🔋</span></div>
+    <div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+    <div class="sa">
+     <div class="px" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+       <div style="display:flex;align-items:center;gap:12px">
+        <div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--amber-l);color:var(--amber)">YP</div>
+        <div><div class="t-h2">Yuki Patel</div><div class="t-sub">Japan · Submitted 5h ago</div></div>
+       </div>
+       <span class="pill-status ps-review" id="det-status-yp">Under review</span>
+      </div>
+      <div class="card-sm" style="padding:14px 16px;margin-bottom:16px">
+       <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--amber)">0.58</span></div>
+       <div class="risk-track-lg">
+        <div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div>
+        <div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div>
+        <div class="risk-dot-lg" style="left:58%;border-color:var(--amber)"></div>
+       </div>
+       <div style="display:flex;justify-content:space-between;margin-top:28px">
+        <span style="font-size:11px;color:var(--green)">Low</span>
+        <span style="font-size:11px;color:var(--amber)">Review</span>
+        <span style="font-size:11px;color:var(--red)">High / EDD</span>
+       </div>
+       <div style="margin-top:10px;padding:8px 10px;background:var(--amber-l);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--amber)">Above review threshold — EDD approaching</div>
+       </div>
+      </div>
+     </div>
+     <div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div>
+     <div class="check-list">
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">98.1% conf.</div></div>
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Passport · Exp 2027</div></div>
+      <div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div>
+      <div class="check-row"><div class="check-icon ci-warn">⚠</div><div class="check-label">Transaction volume</div><div class="check-val" style="color:var(--amber)">€22k/mo</div></div>
+      <div class="check-row"><div class="check-icon ci-warn">⚠</div><div class="check-label">Multi-jurisdiction</div><div class="check-val" style="color:var(--amber)">3 regions</div></div>
+     </div>
+     <div class="audit-section">
+      <div class="audit-toggle" id="audit-toggle-yp" onclick="toggleAudit('yp')">
+       <div class="audit-toggle-left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span style="font-size:13px;font-weight:500;color:var(--sub)">Activity log</span>
+        <span style="font-size:11px;font-weight:600;padding:2px 7px;background:var(--bg);border-radius:20px;color:var(--muted)">3 events</span>
+       </div>
+       <svg class="audit-chevron" id="audit-chev-yp" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="audit-log" id="audit-log-yp">
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--amber)"></div>
+        <div class="audit-time">04:48</div>
+        <div><div class="audit-text">High volume + multi-jurisdiction flagged — queued for review</div><div class="audit-actor">System · AML Engine</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--green)"></div>
+        <div class="audit-time">04:46</div>
+        <div><div class="audit-text">Document verified — passport accepted</div><div class="audit-actor">System · Document Verification</div></div>
+       </div>
+       <div class="audit-entry">
+        <div class="audit-dot" style="background:var(--accent)"></div>
+        <div class="audit-time">04:43</div>
+        <div><div class="audit-text">Case created — onboarding flow initiated</div><div class="audit-actor">Customer · Yuki Patel</div></div>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="action-bar">
+     <button class="act act-decline" onclick="decide('yp','Declined')">Decline</button>
+     <button class="act act-escalate" onclick="openEscalate('Yuki Patel')">Escalate</button>
+     <button class="act act-approve" onclick="decide('yp','Approved')">Approve</button>
+    </div>
+   </div>
+
+   <!-- Verified cases -->
+   <div class="screen" id="s_sf"><div class="status"><span>9:41</span><span>●●● 🔋</span></div><div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div><div class="sa"><div class="px" style="margin-bottom:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--green-l);color:var(--green)">SF</div><div><div class="t-h2">Sara Fernández</div><div class="t-sub">Spain · Approved 1h ago</div></div></div><span class="pill-status ps-verified">Verified</span></div><div class="card-sm" style="padding:14px 16px;margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--green)">0.12</span></div><div class="risk-track-lg"><div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div><div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div><div class="risk-dot-lg" style="left:12%;border-color:var(--green)"></div></div><div style="display:flex;justify-content:space-between;margin-top:28px"><span style="font-size:11px;color:var(--green)">Low</span><span style="font-size:11px;color:var(--amber)">Review</span><span style="font-size:11px;color:var(--red)">High / EDD</span></div><div style="margin-top:10px;padding:8px 10px;background:var(--green-l);border-radius:8px"><div style="font-size:12px;font-weight:600;color:var(--green)">Below auto-clear threshold — auto-approved</div></div></div></div><div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div><div class="check-list"><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">99.1% conf.</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Exp 2027</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">AML screening</div><div class="check-val">Auto-cleared</div></div></div><div class="audit-section"><div class="audit-toggle" id="audit-toggle-sf" onclick="toggleAudit('sf')"><div class="audit-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span style="font-size:13px;font-weight:500;color:var(--sub)">Activity log</span><span style="font-size:11px;font-weight:600;padding:2px 7px;background:var(--bg);border-radius:20px;color:var(--muted)">4 events</span></div><svg class="audit-chevron" id="audit-chev-sf" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="audit-log" id="audit-log-sf"><div class="audit-entry"><div class="audit-dot" style="background:var(--green)"></div><div class="audit-time">08:53</div><div><div class="audit-text">Case auto-approved — below auto-clear threshold (0.12 &lt; 0.20)</div><div class="audit-actor">System · OnboardIQ Router</div></div></div><div class="audit-entry"><div class="audit-dot" style="background:var(--green)"></div><div class="audit-time">08:52</div><div><div class="audit-text">AML screening passed — no flags</div><div class="audit-actor">System · AML Engine</div></div></div><div class="audit-entry"><div class="audit-dot" style="background:var(--green)"></div><div class="audit-time">08:50</div><div><div class="audit-text">Document verified — national ID accepted</div><div class="audit-actor">System · Document Verification</div></div></div><div class="audit-entry"><div class="audit-dot" style="background:var(--accent)"></div><div class="audit-time">08:47</div><div><div class="audit-text">Case created — onboarding flow initiated</div><div class="audit-actor">Customer · Sara Fernández</div></div></div></div></div></div></div>
+
+   <div class="screen" id="s_lk"><div class="status"><span>9:41</span><span>●●● 🔋</span></div><div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div><div class="sa"><div class="px" style="margin-bottom:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:#F5F3FF;color:#7C3AED">LK</div><div><div class="t-h2">Léa Kowalski</div><div class="t-sub">France · Approved 3h ago</div></div></div><span class="pill-status ps-verified">Verified</span></div><div class="card-sm" style="padding:14px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--green)">0.09</span></div><div class="risk-track-lg"><div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div><div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div><div class="risk-dot-lg" style="left:9%;border-color:var(--green)"></div></div><div style="display:flex;justify-content:space-between;margin-top:28px"><span style="font-size:11px;color:var(--green)">Low</span><span style="font-size:11px;color:var(--amber)">Review</span><span style="font-size:11px;color:var(--red)">High / EDD</span></div><div style="margin-top:10px;padding:8px 10px;background:var(--green-l);border-radius:8px"><div style="font-size:12px;font-weight:600;color:var(--green)">Below auto-clear threshold — auto-approved</div></div></div></div><div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div><div class="check-list"><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">98.8% conf.</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Exp 2030</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">AML screening</div><div class="check-val">Auto-cleared</div></div></div></div></div>
+
+   <div class="screen" id="s_jm"><div class="status"><span>9:41</span><span>●●● 🔋</span></div><div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div><div class="sa"><div class="px" style="margin-bottom:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--bg);color:var(--sub)">JM</div><div><div class="t-h2">James Murphy</div><div class="t-sub">Ireland · Submitted 4h ago</div></div></div><span class="pill-status ps-pending" id="det-status-jm">Pending</span></div><div class="card-sm" style="padding:14px 16px;margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--green)">0.18</span></div><div class="risk-track-lg"><div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div><div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div><div class="risk-dot-lg" style="left:18%;border-color:var(--green)"></div></div><div style="display:flex;justify-content:space-between;margin-top:28px"><span style="font-size:11px;color:var(--green)">Low</span><span style="font-size:11px;color:var(--amber)">Review</span><span style="font-size:11px;color:var(--red)">High / EDD</span></div><div style="margin-top:10px;padding:8px 10px;background:var(--accent-l);border-radius:8px"><div style="font-size:12px;font-weight:600;color:var(--accent)">Just above auto-clear — queued for review</div></div></div></div><div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div><div class="check-list"><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">99.0% conf.</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Exp 2031</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div><div class="check-row"><div class="check-icon ci-info">i</div><div class="check-label">AML screening</div><div class="check-val">Queue review</div></div></div><div class="audit-section"><div class="audit-toggle" id="audit-toggle-jm" onclick="toggleAudit('jm')"><div class="audit-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span style="font-size:13px;font-weight:500;color:var(--sub)">Activity log</span><span style="font-size:11px;font-weight:600;padding:2px 7px;background:var(--bg);border-radius:20px;color:var(--muted)">3 events</span></div><svg class="audit-chevron" id="audit-chev-jm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="audit-log" id="audit-log-jm"><div class="audit-entry"><div class="audit-dot" style="background:var(--accent)"></div><div class="audit-time">05:48</div><div><div class="audit-text">Score 0.18 — marginally above auto-clear, queued for human review</div><div class="audit-actor">System · OnboardIQ Router</div></div></div><div class="audit-entry"><div class="audit-dot" style="background:var(--green)"></div><div class="audit-time">05:45</div><div><div class="audit-text">Document verified — passport accepted</div><div class="audit-actor">System · Document Verification</div></div></div><div class="audit-entry"><div class="audit-dot" style="background:var(--accent)"></div><div class="audit-time">05:42</div><div><div class="audit-text">Case created — onboarding flow initiated</div><div class="audit-actor">Customer · James Murphy</div></div></div></div></div></div><div class="action-bar"><button class="act act-decline" onclick="decide('jm','Declined')">Decline</button><button class="act act-approve" onclick="decide('jm','Approved')">Approve</button></div></div>
+
+   <div class="screen" id="s_ob"><div class="status"><span>9:41</span><span>●●● 🔋</span></div><div class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div><div class="sa"><div class="px" style="margin-bottom:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><div class="case-init" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:var(--bg);color:var(--sub)">OB</div><div><div class="t-h2">Olivia Brennan</div><div class="t-sub">Ireland · Approved 6h ago</div></div></div><span class="pill-status ps-verified">Verified</span></div><div class="card-sm" style="padding:14px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="t-cap">Risk score</span><span style="font-size:14px;font-weight:700;color:var(--green)">0.08</span></div><div class="risk-track-lg"><div class="risk-thresh-lg thresh-clear" style="left:20%"><span class="risk-thresh-lbl-lg thresh-clear-lbl" style="left:50%">Auto-clear (0.20)</span></div><div class="risk-thresh-lg thresh-edd" style="left:45%"><span class="risk-thresh-lbl-lg thresh-edd-lbl" style="left:50%">EDD required (0.45)</span></div><div class="risk-dot-lg" style="left:8%;border-color:var(--green)"></div></div><div style="display:flex;justify-content:space-between;margin-top:28px"><span style="font-size:11px;color:var(--green)">Low</span><span style="font-size:11px;color:var(--amber)">Review</span><span style="font-size:11px;color:var(--red)">High / EDD</span></div><div style="margin-top:10px;padding:8px 10px;background:var(--green-l);border-radius:8px"><div style="font-size:12px;font-weight:600;color:var(--green)">Below auto-clear threshold — auto-approved</div></div></div></div><div class="px" style="margin-bottom:8px"><span class="t-cap">Verification checks</span></div><div class="check-list"><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Liveness detection</div><div class="check-val">99.3% conf.</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">Document validity</div><div class="check-val">Exp 2028</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">PEP / Sanctions</div><div class="check-val">Clear</div></div><div class="check-row"><div class="check-icon ci-pass">✓</div><div class="check-label">AML screening</div><div class="check-val">Auto-cleared</div></div></div></div></div>
+
+   <!-- ════════════════════════════════ -->
+   <!-- ESCALATION MODAL                -->
+   <!-- ════════════════════════════════ -->
+   <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-sheet">
+     <div class="modal-hdr">
+      <div class="t-h3" id="modal-title">Escalate case</div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+     </div>
+     <div class="t-sub" style="margin-bottom:20px">Choose an escalation path for this case.</div>
+     <button class="modal-opt" onclick="closeModal();showToast('✓','Docs requested — customer notified')">Request additional documents</button>
+     <button class="modal-opt" onclick="closeModal();showToast('✓','Assigned to senior reviewer')">Assign to senior reviewer</button>
+     <button class="modal-opt" onclick="closeModal();showToast('✓','Referred to legal counsel')">Refer to legal counsel</button>
+     <button class="modal-opt" style="color:var(--sub)" onclick="closeModal()">Cancel</button>
+    </div>
+   </div>
+
+   <div id="toast"></div>
+
+  </div><!-- /screens -->
+
+  <nav class="nav" id="nav">
+   <div class="ni on" id="ni-home" onclick="goTab('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="lbl">Home</span>
+   </div>
+   <div class="ni" id="ni-cases" onclick="goTab('cases')">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span class="lbl">Cases</span>
+   </div>
+   <div class="ni" id="ni-alerts" onclick="goTab('alerts')">
+    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <div class="nav-badge" id="alert-badge">3</div>
+    <span class="lbl">Alerts</span>
+   </div>
+   <div class="ni" id="ni-insights" onclick="goTab('insights')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="lbl">Insights</span>
+   </div>
+   <div class="ni" id="ni-ai" onclick="goTab('ai')">
+    <svg viewBox="0 0 24 24" stroke="none" fill="none">
+     <path id="spark1" fill="#475569" d="M12 3L13.5 9L19 10.5L13.5 12L12 18L10.5 12L5 10.5L10.5 9L12 3Z"/>
+     <path id="spark2" fill="#475569" d="M19 14L20 17L23 18L20 19L19 22L18 19L15 18L18 17L19 14Z" opacity=".55"/>
+    </svg>
+    <span class="lbl">AI</span>
+   </div>
+  </nav>
+
+ </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────
+let hist = ['s_home'];
+const tabs = ['home','cases','alerts','insights','ai'];
+let alertCount = 3;
+let funnelAnimated = false;
+
+// ── Screens ───────────────────────────────────
+function showScreen(id, dir) {
+  const cur = document.querySelector('.screen.active');
+  const nxt = document.getElementById(id);
+  if (!nxt || (cur && cur.id === id)) return;
+  if (cur) {
+    cur.style.transition = 'opacity .2s ease, transform .2s ease';
+    cur.style.opacity = '0';
+    cur.style.transform = dir === 'back' ? 'translateX(28px)' : 'translateX(-24px)';
+  }
+  nxt.style.transition = 'none';
+  nxt.style.opacity = '0';
+  nxt.style.transform = dir === 'back' ? 'translateX(-18px)' : 'translateX(28px)';
+  nxt.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    nxt.style.transition = 'opacity .22s ease, transform .22s ease';
+    nxt.style.opacity = '1';
+    nxt.style.transform = 'translateX(0)';
+  }));
+  setTimeout(() => {
+    if (cur) { cur.classList.remove('active'); cur.style.cssText = ''; }
+    nxt.style.transition = '';
+    const sa = nxt.querySelector('.sa');
+    if (sa && dir !== 'back') sa.scrollTop = 0;
+  }, 240);
+}
+
+function go(id) {
+  hist.push(id);
+  showScreen(id, 'forward');
+}
+
+function goTab(tab) {
+  const id = 's_' + tab;
+  if (hist[hist.length-1] === id) return;
+  hist.push(id);
+  showScreen(id, 'forward');
+  setTab(tab);
+  if (tab === 'insights') setTimeout(animateFunnel, 200);
+}
+
+function goBack() {
+  if (hist.length < 2) return;
+  hist.pop();
+  const prev = hist[hist.length-1];
+  showScreen(prev, 'back');
+  const s = document.getElementById(prev);
+  const tab = s && s.dataset.tab;
+  if (tab) setTab(tab);
+}
+
+function openCase(key) { go('s_' + key); }
+
+function setTab(tab) {
+  tabs.forEach(t => {
+    const el = document.getElementById('ni-' + t);
+    if (!el) return;
+    el.classList.toggle('on', t === tab);
+  });
+  const s1 = document.getElementById('spark1');
+  const s2 = document.getElementById('spark2');
+  if (s1) s1.setAttribute('fill', tab === 'ai' ? 'var(--accent)' : '#475569');
+  if (s2) s2.setAttribute('fill', tab === 'ai' ? 'var(--accent)' : '#475569');
+}
+
+// ── Case filter ────────────────────────────────
+function filterCases(status, pill) {
+  document.querySelectorAll('#case-filters .fpill').forEach(p => p.classList.remove('on'));
+  pill.classList.add('on');
+  document.querySelectorAll('#clist .case-row').forEach(r => {
+    r.style.display = (status === 'All' || r.dataset.s === status) ? 'flex' : 'none';
+  });
+}
+
+// ── IMPROVEMENT: Synced state across Alerts + Cases ──
+const caseState = { ar: 'Flagged', mc: 'Pending', yp: 'Review', jm: 'Pending' };
+
+function syncCaseStatus(key, action) {
+  const status = action === 'Approved' ? 'Verified' : 'Declined';
+  const newData = action === 'Approved' ? 'Verified' : 'Flagged';
+  caseState[key] = action === 'Approved' ? 'Verified' : 'Declined';
+
+  // Update Cases list pill
+  const csPill = document.getElementById('cs-' + key);
+  if (csPill) {
+    csPill.textContent = action === 'Approved' ? 'Verified' : 'Declined';
+    csPill.className = 'pill-status ' + (action === 'Approved' ? 'ps-verified' : 'ps-flagged');
+  }
+  // Update Cases list data-s
+  const cr = document.getElementById('cr-' + key);
+  if (cr) cr.dataset.s = action === 'Approved' ? 'Verified' : 'Declined';
+
+  // Update detail screen status pill
+  const detPill = document.getElementById('det-status-' + key);
+  if (detPill) {
+    detPill.textContent = action === 'Approved' ? 'Verified' : 'Declined';
+    detPill.className = 'pill-status ' + (action === 'Approved' ? 'ps-verified' : 'ps-flagged');
+  }
+}
+
+// ── Alert resolution (syncs to Cases) ────────
+function resolveAlert(key, action) {
+  const el = document.getElementById('alert-' + key);
+  if (!el) return;
+  el.style.opacity = '0';
+  el.style.transform = 'translateX(24px)';
+  showToast(action === 'Approved' ? '✓' : '✕', (action === 'Approved' ? 'Approved' : 'Declined') + ' — logged and synced');
+
+  // Sync to Cases + detail screen
+  syncCaseStatus(key, action);
+
+  setTimeout(() => {
+    el.remove();
+    alertCount--;
+    updateAlertBadge();
+    checkAlertsEmpty();
+  }, 300);
+}
+
+function updateAlertBadge() {
+  const badge = document.getElementById('alert-badge');
+  const subtitle = document.getElementById('alert-subtitle');
+  if (alertCount <= 0) {
+    badge.style.display = 'none';
+    subtitle.textContent = 'All clear';
+  } else {
+    badge.textContent = alertCount;
+    subtitle.textContent = alertCount + ' require review';
+  }
+}
+
+function checkAlertsEmpty() {
+  if (alertCount <= 0) {
+    document.getElementById('alerts-empty').style.display = 'flex';
+  }
+}
+
+// ── Case detail decision (also syncs) ────────
+function decide(key, action) {
+  syncCaseStatus(key, action);
+  showToast(action === 'Approved' ? '✓' : '✕', (action === 'Approved' ? 'Approved' : 'Declined') + ' — audit trail logged');
+
+  // Remove from alerts queue too if present
+  const alertEl = document.getElementById('alert-' + key);
+  if (alertEl) {
+    alertEl.style.opacity = '0';
+    alertEl.style.transform = 'translateX(24px)';
+    setTimeout(() => {
+      alertEl.remove();
+      alertCount--;
+      updateAlertBadge();
+      checkAlertsEmpty();
+    }, 300);
+  }
+  setTimeout(goBack, 1300);
+}
+
+// ── IMPROVEMENT 3: Audit trail toggle ────────
+function toggleAudit(key) {
+  const toggle = document.getElementById('audit-toggle-' + key);
+  const log = document.getElementById('audit-log-' + key);
+  const chev = document.getElementById('audit-chev-' + key);
+  const isOpen = log.classList.contains('open');
+  log.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+// ── Escalation modal ──────────────────────────
+function openEscalate(name) {
+  document.getElementById('modal-title').textContent = 'Escalate — ' + name;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ── Toast ─────────────────────────────────────
+let toastTimer;
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = '<span style="font-size:16px">' + icon + '</span> ' + msg;
+  t.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.opacity = '0', 2400);
+}
+
+// ── Insights: Time period selector ───────────
+const periodData = {
+  week: { label: 'Week of Apr 14 – Apr 20', caption: '280 verifications · avg 46/day', review: '1m47s', fp: '6.2%', onboard: '8m12s', saved: '14.2h', cost: '€315' },
+  month: { label: 'April 2026', caption: '1,240 verifications · avg 41/day', review: '1m52s', fp: '5.9%', onboard: '8m44s', saved: '61.5h', cost: '€1,370' },
+  quarter: { label: 'Q1 2026 — Jan to Mar', caption: '3,980 verifications · avg 44/day', review: '2m01s', fp: '7.1%', onboard: '9m12s', saved: '198h', cost: '€4,400' }
+};
+
+function setPeriod(period, el) {
+  document.querySelectorAll('[id^="tp-"]').forEach(e => {
+    e.style.background = '';
+    e.style.color = 'var(--sub)';
+    e.style.fontWeight = '500';
+  });
+  el.style.background = 'var(--surface)';
+  el.style.color = 'var(--text)';
+  el.style.fontWeight = '600';
+  const d = periodData[period];
+  document.getElementById('period-label').textContent = d.label;
+  document.getElementById('chart-caption').textContent = d.caption;
+  document.getElementById('kpi-review').textContent = d.review;
+  document.getElementById('kpi-fp').textContent = d.fp;
+  document.getElementById('kpi-onboard').textContent = d.onboard;
+  document.getElementById('kpi-saved').textContent = d.saved;
+  document.getElementById('kpi-cost').textContent = d.cost;
+}
+
+// ── Funnel animation ──────────────────────────
+function animateFunnel() {
+  if (funnelAnimated) return;
+  funnelAnimated = true;
+  document.querySelectorAll('#funnel-wrap .funnel-bar').forEach((bar, i) => {
+    setTimeout(() => { bar.style.width = bar.dataset.w; }, i * 80);
+  });
+}
+
+// ── AI chatbot ────────────────────────────────
+const aiData = {
+  'PEP handling': `When a PEP is flagged by OnboardIQ:\n\n1. Case is auto-blocked — no approval possible without override\n2. Apply Enhanced Due Diligence (EDD)\n3. Request source of funds + wealth documentation\n4. Obtain explicit senior management sign-off\n5. Set enhanced ongoing monitoring\n\nUnder AMLD6, all PEP approvals require senior authorisation and at minimum annual review. The policy threshold in OnboardIQ is set to auto-flag any PEP match regardless of numeric risk score.`,
+  'AMLD6': `6th Anti-Money Laundering Directive — key changes for FinTechs:\n\n• 22 predicate offences now in scope (cybercrime, tax, environmental)\n• Criminal liability extended to legal entities, not just individuals\n• Minimum 4-year imprisonment for money laundering offences\n• Stricter beneficial ownership registers\n• Mandatory cross-border EU cooperation\n\nFor your team: tighter CDD at onboarding, stronger transaction monitoring, and mandatory SAR filing on all suspicious activity. OnboardIQ question flows are built to AMLD6 CDD standards.`,
+  'EDD explained': `Enhanced Due Diligence is required when risk score exceeds 0.45, or when:\n\n• Customer is a PEP\n• Transaction involves FATF grey/black list jurisdictions\n• Unusual or complex transaction patterns detected\n• High declared monthly volume (€25k+)\n• Non-face-to-face relationships at high value\n\nEDD checklist:\n— Additional identity documentation\n— Source of funds and wealth evidence\n— Senior management approval (documented)\n— Enhanced monitoring schedule\n— Annual minimum review\n\nAll EDD decisions are logged in the OnboardIQ audit trail.`,
+  'False positive benchmarks': `Your current metrics vs industry:\n\n• Your false positive rate: 6.2%\n• Industry average (rule-based AML): ~95%\n• Your auto-cleared today: 24 alerts\n• True positive accuracy: 97.8%\n• Avg review time: 1m 47s\n\nThe model retrains weekly using your approve/decline decisions. Every case you decide improves future accuracy — the feedback loop is live.\n\nTarget: below 5% false positives by Q3, based on current trajectory.`
+};
+
+function appendMsg(text, sender) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg-row' + (sender === 'me' ? ' me' : '');
+  if (sender === 'bot') {
+    div.innerHTML = `<div class="bot-avi"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg></div><div class="bubble bot">${text.replace(/\n/g,'<br>')}</div>`;
+  } else {
+    div.innerHTML = `<div class="bubble me">${text}</div>`;
+  }
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function typing() {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg-row'; div.id = 'typing-ind';
+  div.innerHTML = `<div class="bot-avi"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2L12 2Z"/></svg></div><div class="bubble bot"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function hideSuggestions() {
+  const s = document.getElementById('suggestions');
+  if (s) s.style.display = 'none';
+}
+
+function askAI(q) {
+  hideSuggestions();
+  appendMsg(q, 'me');
+  typing();
+  setTimeout(() => {
+    document.getElementById('typing-ind')?.remove();
+    const r = aiData[q] || `For "${q}", I'd recommend:\n\n• Central Bank of Ireland AML guidance\n• FATF Recommendation 10 (CDD)\n• Your internal MLRO policy manual\n\nWant me to clarify anything specific?`;
+    appendMsg(r, 'bot');
+  }, 800 + Math.random() * 400);
+}
+
+function sendAI() {
+  const inp = document.getElementById('ai-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  hideSuggestions();
+  appendMsg(txt, 'me');
+  typing();
+  setTimeout(() => {
+    document.getElementById('typing-ind')?.remove();
+    const r = aiData[txt] || `Good question. For "${txt}":\n\n• Check the Central Bank of Ireland AML guidance\n• Review FATF Recommendations at fatf-gafi.org\n• Consult your MLRO for jurisdiction specifics\n\nIs there a specific aspect I can clarify?`;
+    appendMsg(r, 'bot');
+  }, 900 + Math.random() * 500);
+}
+</script>
+</body>
+</html>
